@@ -1,11 +1,11 @@
 {
   "mappings": [
-    "/content/edsuetraining/:/",
-    "/content/edsuetraining/configuration:/.helix/config.json",
-    "/content/edsuetraining/metadata:/metadata.json"
+    "/content/edsUeTraining/:/",
+    "/content/edsUeTraining/configuration:/.helix/config.json",
+    "/content/edsUeTraining/metadata:/metadata.json"
   ],
   "includes": [
-    "/content/edsuetraining/",
+    "/content/edsUeTraining/",
     "/content/dam"
   ]
 }
