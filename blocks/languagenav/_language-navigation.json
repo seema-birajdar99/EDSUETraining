@@ -22,7 +22,7 @@
       "fields": [
         {
         "component": "container",
-        "name": "test",
+        "name": "container",
         "label": "Multi Text",
         "multi": true,
         "fields": [
