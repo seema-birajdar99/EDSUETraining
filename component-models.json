@@ -272,5 +272,32 @@
         "valueType": "string"
       }
     ]
+  },
+  {
+    "id": "language-navigation",
+    "fields": [
+      {
+        "component": "container",
+        "name": "test",
+        "label": "Multi Text",
+        "multi": true,
+        "fields": [
+          {
+            "component": "text",
+            "name": "language",
+            "value": "",
+            "label": "Language",
+            "valueType": "string"
+          },
+          {
+            "component": "aem-content",
+            "name": "languagePath",
+            "value": "",
+            "label": "Language Path",
+            "valueType": "string"
+          }
+        ]
+      }
+    ]
   }
 ]
