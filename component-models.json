@@ -242,6 +242,8 @@
         "name": "container",
         "label": "Multi Text",
         "multi": true,
+        "valueType": "string",
+        "composite": "{Boolean}false",
         "fields": [
           {
             "component": "text",
