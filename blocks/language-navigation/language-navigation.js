@@ -18,15 +18,26 @@ function createToggle(labelText) {
 }
 
 /**
- * Builds dropdown list from links
+ * Builds dropdown list from multifield items
  */
-function createList(linksWrapper) {
+function createList(items) {
   const ul = document.createElement('ul');
 
-  const links = linksWrapper.querySelectorAll('a');
-  links.forEach((link) => {
+  items.forEach((item) => {
+    const cols = item.children;
+
+    if (cols.length < 2) return;
+
+    const language = cols[0].textContent.trim();
+    const link = cols[1].textContent.trim();
+
     const li = document.createElement('li');
-    li.appendChild(link);
+    const a = document.createElement('a');
+
+    a.href = link;
+    a.textContent = language;
+
+    li.appendChild(a);
     ul.appendChild(li);
   });
 
@@ -54,17 +65,27 @@ function setupToggle(block, toggleBtn) {
  * EDS block entry
  */
 export default function decorate(block) {
-  const rows = [...block.children];
+  console.log('Language Navigation Block:', block);
 
-  if (rows.length < 2) {
+  // Find container (multifield wrapper)
+  const container = block.querySelector(':scope > div');
+  console.log('Language Navigation container:', container);
+
+  if (!container) {
     return;
   }
 
-  const defaultLanguage = rows[0].textContent.trim();
-  const linksWrapper = rows[1];
+  const items = [...container.children];
+ console.log('Language Navigation Container children:', items);
+  if (!items.length) {
+    return;
+  }
+
+  // Default language = first item first column
+  const defaultLanguage = items[0]?.children[0]?.textContent.trim() || '';
 
   const toggle = createToggle(defaultLanguage);
-  const list = createList(linksWrapper);
+  const list = createList(items);
 
   block.innerHTML = '';
   block.append(toggle, list);
