@@ -1,71 +1,34 @@
-async function getItemsFromContainer(basePath) {
-  const itemsMap = new Map();
-  const cleanedPath = basePath.replace('urn:aemconnection:', '');
-
-  console.log('Language Nav: Base path:', cleanedPath);
-
-  async function fetchItem(index) {
-    const itemPath = `${cleanedPath}/item${index}.json`;
-
-    try {
-      const response = await fetch(itemPath);
-
-      if (!response.ok) {
-        return; // explicit stop, no value returned
-      }
-
-      const data = await response.json();
-
-      if (data?.language && data?.languagePath) {
-        itemsMap.set(data.language, data.languagePath);
-      }
-
-      // Await next call instead of returning it
-      await fetchItem(index + 1);
-    } catch (error) {
-      console.log(`Language Nav: Error at item${index}`, error);
-    }
-  }
-
-  await fetchItem(0);
-  return itemsMap;
-}
-
 export default async function decorate(block) {
-  const container = block.firstElementChild;
+  const response = await fetch('/site-config.json');
+  if (!response.ok) return;
 
-  if (!container) return;
+  const { data } = await response.json();
+  if (!data?.length) return;
 
-  const basePath = container.dataset?.aueResource;
-  if (!basePath) return;
+  const items = new Map(
+    data
+      .filter((row) => row.Language && row['Language Path'])
+      .map((row) => [row.Language, row['Language Path']]),
+  );
 
-  const itemsMap = await getItemsFromContainer(basePath);
+  if (!items.size) return;
 
-  if (!itemsMap.size) {
-    return;
-  }
-
-  // Build dropdown
   const toggle = document.createElement('button');
   toggle.className = 'lang-toggle';
   toggle.type = 'button';
-  const [firstLanguage] = itemsMap.keys();
-  toggle.textContent = firstLanguage;
 
-  const ul = document.createElement('ul');
+  const [first] = items.keys();
+  toggle.textContent = first;
 
-  itemsMap.forEach((path, label) => {
+  const list = document.createElement('ul');
+
+  items.forEach((path, label) => {
     const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = path;
-    a.textContent = label;
-
-    li.appendChild(a);
-    ul.appendChild(li);
+    li.innerHTML = `<a href="${path}">${label}</a>`;
+    list.appendChild(li);
   });
 
-  block.innerHTML = '';
-  block.append(toggle, ul);
+  block.replaceChildren(toggle, list);
 
   toggle.addEventListener('click', () => {
     block.classList.toggle('open');
