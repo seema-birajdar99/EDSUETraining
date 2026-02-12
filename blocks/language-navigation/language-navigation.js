@@ -1,94 +1,84 @@
-function createToggle(labelText) {
-  const button = document.createElement('button');
-  button.className = 'lang-toggle';
-  button.type = 'button';
-  button.setAttribute('aria-expanded', 'false');
+async function getItemsFromContainer(basePath) {
+  const itemsMap = new Map();
+  const cleanedPath = basePath.replace('urn:aemconnection:', '');
 
-  const label = document.createElement('span');
-  label.className = 'label';
-  label.textContent = labelText;
+  console.log('Language Nav: Base path:', cleanedPath);
 
-  const arrow = document.createElement('span');
-  arrow.className = 'arrow';
-  arrow.textContent = '▾';
+  async function fetchItem(index) {
+    const itemPath = `${cleanedPath}/item${index}.json`;
+    console.log('Language Nav: Trying path:', itemPath);
 
-  button.append(label, arrow);
+    try {
+      const response = await fetch(itemPath);
 
-  return button;
+      if (!response.ok) {
+        console.log(`Language Nav: item${index} not found. Stopping.`);
+        return; // explicit stop, no value returned
+      }
+
+      const data = await response.json();
+      console.log(`Language Nav: item${index} data:`, data);
+
+      if (data?.language && data?.languagePath) {
+        itemsMap.set(data.language, data.languagePath);
+        console.log(
+          `Language Nav: Stored -> ${data.language} : ${data.languagePath}`
+        );
+      }
+
+      // Await next call instead of returning it
+      await fetchItem(index + 1);
+    } catch (error) {
+      console.log(`Language Nav: Error at item${index}`, error);
+    }
+  }
+
+  await fetchItem(0);
+
+  console.log('Language Nav: Final Map:', itemsMap);
+  return itemsMap;
 }
 
-/**
- * Builds dropdown list from multifield items
- */
-function createList(items) {
+export default async function decorate(block) {
+  const container = block.firstElementChild;
+
+  if (!container) return;
+
+  const basePath = container.dataset?.aueResource;
+  if (!basePath) return;
+
+  const itemsMap = await getItemsFromContainer(basePath);
+
+  if (!itemsMap.size) {
+    console.log('Language Nav: No items found');
+    return;
+  }
+
+  // Build dropdown
+  const toggle = document.createElement('button');
+  toggle.className = 'lang-toggle';
+  toggle.type = 'button';
+  const [firstLanguage] = itemsMap.keys();
+  toggle.textContent = firstLanguage;
+
   const ul = document.createElement('ul');
 
-  items.forEach((item) => {
-    const cols = item.children;
-
-    if (cols.length < 2) return;
-
-    const language = cols[0].textContent.trim();
-    const link = cols[1].textContent.trim();
+  itemsMap.forEach((path, label) => {
+    console.log('Language Nav: Creating link:', label, path);
 
     const li = document.createElement('li');
     const a = document.createElement('a');
-
-    a.href = link;
-    a.textContent = language;
+    a.href = path;
+    a.textContent = label;
 
     li.appendChild(a);
     ul.appendChild(li);
   });
 
-  return ul;
-}
-
-/**
- * Handles toggle behavior
- */
-function setupToggle(block, toggleBtn) {
-  toggleBtn.addEventListener('click', () => {
-    const isOpen = block.classList.toggle('open');
-    toggleBtn.setAttribute('aria-expanded', isOpen);
-  });
-
-  document.addEventListener('click', (event) => {
-    if (!block.contains(event.target)) {
-      block.classList.remove('open');
-      toggleBtn.setAttribute('aria-expanded', 'false');
-    }
-  });
-}
-
-/**
- * EDS block entry
- */
-export default function decorate(block) {
-  console.log('Language Navigation Block:', block);
-
-  // Find container (multifield wrapper)
-  const container = block.querySelector(':scope > div');
-  console.log('Language Navigation container:', container);
-
-  if (!container) {
-    return;
-  }
-
-  const items = [...container.children];
- console.log('Language Navigation Container children:', items);
-  if (!items.length) {
-    return;
-  }
-
-  // Default language = first item first column
-  const defaultLanguage = items[0]?.children[0]?.textContent.trim() || '';
-
-  const toggle = createToggle(defaultLanguage);
-  const list = createList(items);
-
   block.innerHTML = '';
-  block.append(toggle, list);
+  block.append(toggle, ul);
 
-  setupToggle(block, toggle);
+  toggle.addEventListener('click', () => {
+    block.classList.toggle('open');
+  });
 }
