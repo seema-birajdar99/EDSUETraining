@@ -6,24 +6,18 @@ async function getItemsFromContainer(basePath) {
 
   async function fetchItem(index) {
     const itemPath = `${cleanedPath}/item${index}.json`;
-    console.log('Language Nav: Trying path:', itemPath);
 
     try {
       const response = await fetch(itemPath);
 
       if (!response.ok) {
-        console.log(`Language Nav: item${index} not found. Stopping.`);
         return; // explicit stop, no value returned
       }
 
       const data = await response.json();
-      console.log(`Language Nav: item${index} data:`, data);
 
       if (data?.language && data?.languagePath) {
         itemsMap.set(data.language, data.languagePath);
-        console.log(
-          `Language Nav: Stored -> ${data.language} : ${data.languagePath}`
-        );
       }
 
       // Await next call instead of returning it
@@ -34,8 +28,6 @@ async function getItemsFromContainer(basePath) {
   }
 
   await fetchItem(0);
-
-  console.log('Language Nav: Final Map:', itemsMap);
   return itemsMap;
 }
 
@@ -50,7 +42,6 @@ export default async function decorate(block) {
   const itemsMap = await getItemsFromContainer(basePath);
 
   if (!itemsMap.size) {
-    console.log('Language Nav: No items found');
     return;
   }
 
@@ -64,8 +55,6 @@ export default async function decorate(block) {
   const ul = document.createElement('ul');
 
   itemsMap.forEach((path, label) => {
-    console.log('Language Nav: Creating link:', label, path);
-
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = path;
