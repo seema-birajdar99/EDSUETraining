@@ -1,11 +1,31 @@
+import { getMetadata } from '../../scripts/aem.js';
+
+/**
+ * Builds a new URL path from locale (e.g., en-US → /us/en)
+ * and preserves the rest of the current path.
+ */
+function buildPathFromLocale(locale) {
+  if (!locale) return null;
+
+  const [language, country] = locale.split('-');
+  if (!language || !country) return null;
+
+  const newRoot = `/${country.toLowerCase()}/${language.toLowerCase()}`;
+
+  const currentPath = window.location.pathname;
+
+  // remove existing /country/lang
+  const remainder = currentPath.replace(/^\/[a-z]{2}\/[a-z]{2}/i, '');
+
+  return `${newRoot}${remainder}`;
+}
+
 export default async function decorate(block) {
   const response = await fetch('/site-config.json');
   if (!response.ok) return;
 
   const { data } = await response.json();
   if (!data?.length) return;
-
-  const currentPath = window.location.pathname;
 
   const items = new Map(
     data
@@ -15,35 +35,46 @@ export default async function decorate(block) {
 
   if (!items.size) return;
 
-  // Find matching language
-  let selectedLabel;
+  const currentLocale = getMetadata('locale');
+
+  const currentPath = window.location.pathname;
+
+  let activeLabel;
+
   items.forEach((path, label) => {
     if (currentPath.startsWith(path)) {
-      selectedLabel = label;
+      activeLabel = label;
     }
   });
 
   const [first] = items.keys();
-  const activeLabel = selectedLabel || first;
 
-  // Create toggle
   const toggle = document.createElement('button');
   toggle.className = 'lang-toggle';
   toggle.type = 'button';
-  toggle.textContent = activeLabel;
+  toggle.textContent = activeLabel || first;
 
   const list = document.createElement('ul');
 
-  items.forEach((path, label) => {
+  items.forEach((locale, label) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
 
-    a.href = path;
+    a.href = '#';
     a.textContent = label;
 
-    if (label === activeLabel) {
+    if (locale === currentLocale) {
       a.classList.add('active');
     }
+
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      const newPath = buildPathFromLocale(locale);
+      if (newPath) {
+        window.location.href = newPath;
+      }
+    });
 
     li.appendChild(a);
     list.appendChild(li);
