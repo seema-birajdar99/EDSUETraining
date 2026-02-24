@@ -1,20 +1,13 @@
-import { getMetadata } from '../../scripts/aem.js';
+function buildPathFromLanguagePath(targetLangPath) {
+  if (!targetLangPath) return '#';
 
-/**
- * Builds a new URL path from locale (e.g., en-US → /us/en)
- * and preserves the rest of the current path.
- */
-function buildPathFromLocale(locale) {
-  if (!locale) return null;
+  const parts = targetLangPath.split('/');
+  const country = parts[parts.length - 2];
+  const language = parts[parts.length - 1];
 
-  const [language, country] = locale.split('-');
-  if (!language || !country) return null;
-
-  const newRoot = `/${country.toLowerCase()}/${language.toLowerCase()}`;
+  const newRoot = `/${country}/${language}`;
 
   const currentPath = window.location.pathname;
-
-  // remove existing /country/lang
   const remainder = currentPath.replace(/^\/[a-z]{2}\/[a-z]{2}/i, '');
 
   return `${newRoot}${remainder}`;
@@ -34,18 +27,7 @@ export default async function decorate(block) {
   );
 
   if (!items.size) return;
-
-  const currentLocale = getMetadata('locale');
-
-  const currentPath = window.location.pathname;
-
   let activeLabel;
-
-  items.forEach((path, label) => {
-    if (currentPath.startsWith(path)) {
-      activeLabel = label;
-    }
-  });
 
   const [first] = items.keys();
 
@@ -56,25 +38,12 @@ export default async function decorate(block) {
 
   const list = document.createElement('ul');
 
-  items.forEach((locale, label) => {
+  items.forEach((label, path) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
 
-    a.href = '#';
+    a.href = buildPathFromLanguagePath(path);
     a.textContent = label;
-
-    if (locale === currentLocale) {
-      a.classList.add('active');
-    }
-
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-
-      const newPath = buildPathFromLocale(locale);
-      if (newPath) {
-        window.location.href = newPath;
-      }
-    });
 
     li.appendChild(a);
     list.appendChild(li);
