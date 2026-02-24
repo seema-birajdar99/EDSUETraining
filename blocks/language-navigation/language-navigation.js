@@ -38,7 +38,7 @@ export default async function decorate(block) {
 
   const list = document.createElement('ul');
 
-  items.forEach((label, path) => {
+  items.forEach((path, label) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
 
