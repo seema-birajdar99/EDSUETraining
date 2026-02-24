@@ -34,21 +34,26 @@ export default async function decorate(block) {
   const toggle = document.createElement('button');
   toggle.className = 'lang-toggle';
   toggle.type = 'button';
-  toggle.textContent = activeLabel || first;
 
   const list = document.createElement('ul');
+  const currentRoot = window.location.pathname.substring(0, 6);
 
   items.forEach((path, label) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
+    const langRoot = `/${path.split('/').slice(-2).join('/')}`;
 
     a.href = buildPathFromLanguagePath(path);
     a.textContent = label;
 
+    if (currentRoot === langRoot) {
+      a.classList.add('active');
+      activeLabel = label;
+    }
     li.appendChild(a);
     list.appendChild(li);
   });
-
+  toggle.textContent = activeLabel || first;
   block.replaceChildren(toggle, list);
 
   toggle.addEventListener('click', () => {
